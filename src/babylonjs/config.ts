@@ -1,4 +1,4 @@
-import { DracoCompression, SceneLoader } from "@babylonjs/core";
+import { DracoCompression, Scene, SceneLoader } from "@babylonjs/core";
 
 DracoCompression.Configuration = {
   decoder: {
@@ -8,4 +8,10 @@ DracoCompression.Configuration = {
   }
 }
 // 全屏loading
-SceneLoader.ShowLoadingScreen = false
+SceneLoader.ShowLoadingScreen = true
+
+export const babylonDebug = async (scene: Scene) => {
+  await import('@babylonjs/inspector')
+  scene.debugLayer.show({ embedMode: true });
+}
+

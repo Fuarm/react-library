@@ -1,16 +1,29 @@
-import { ArcRotateCamera, Engine, Scene, Vector3 } from "@babylonjs/core";
+import {
+  ArcRotateCamera,
+  CubicEase,
+  EasingFunction,
+  ISceneLoaderProgressEvent,
+  Scene,
+  SceneLoader,
+  Vector3,
+  Animation
+} from "@babylonjs/core";
 import createEngine from "./createEngine";
 import createScene from "./createScene";
+import '@babylonjs/loaders/glTF';
+
+import './config'
 
 class LibraryScene {
   private _scene!: Scene;
   private _camera!: ArcRotateCamera;
+
   constructor(canvas: HTMLCanvasElement) {
     this.init(canvas)
   }
 
   async init(canvas: HTMLCanvasElement) {
-    const engine = await createEngine(canvas)
+    const engine = createEngine(canvas)
     this._scene = createScene(engine)
     this.createCamera()
   }
@@ -35,7 +48,25 @@ class LibraryScene {
     this._camera = camera;
   }
 
-  loadModel() {}
+  animateCamera(type: 'position' | 'target', position: unknown) {
+    const ease = new CubicEase()
+    ease.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT)
+    Animation.CreateAndStartAnimation(
+      "animation",
+      this._camera,
+      type,
+      45,
+      200,
+      this._camera[type],
+      position,
+      0,
+      ease
+    );
+  }
+
+  loadModel(callback?: (event: ISceneLoaderProgressEvent) => void) {
+    SceneLoader.AppendAsync('/model/', 'library.glb', this._scene, callback)
+  }
   
 }
 

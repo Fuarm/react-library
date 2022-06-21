@@ -11,7 +11,7 @@ function App() {
 
   return (
     <>
-      <canvas ref={canvas}></canvas>
+      <canvas className="w-full h-full" ref={canvas}></canvas>
     </>
   )
 }
