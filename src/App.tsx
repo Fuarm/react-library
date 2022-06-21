@@ -6,7 +6,6 @@ function App() {
 
   useEffect(() => {
     const libraryScene = new LibraryScene(canvas.current!)
-    libraryScene.loadModel()
     setTimeout(() => {
       const nav = {
         key: 1,

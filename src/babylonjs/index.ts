@@ -17,20 +17,22 @@ import './config'
 import { rgb } from "../utils";
 
 type ModelAnimation = { position: number[], target: number[] }
+type LoadModeCallback = (event: ISceneLoaderProgressEvent) => void
 
 class LibraryScene {
   private _scene!: Scene;
   private _camera!: ArcRotateCamera;
   private _cacheMesheNames: string[] = []
 
-  constructor(canvas: HTMLCanvasElement) {
-    this.init(canvas)
+  constructor(canvas: HTMLCanvasElement, callback?: LoadModeCallback) {
+    this.init(canvas, callback)
   }
 
-  async init(canvas: HTMLCanvasElement) {
-    const engine = createEngine(canvas)
+  async init(canvas: HTMLCanvasElement, callback?: LoadModeCallback) {
+    const engine = await createEngine(canvas)
     this._scene = createScene(engine)
     this.createCamera()
+    this.loadModel()
   }
   
   createCamera() {
@@ -69,7 +71,7 @@ class LibraryScene {
     );
   }
 
-  loadModel(callback?: (event: ISceneLoaderProgressEvent) => void) {
+  loadModel(callback?: LoadModeCallback) {
     SceneLoader.AppendAsync('/model/', 'library.glb', this._scene, callback)
   }
 
