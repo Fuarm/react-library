@@ -6,17 +6,22 @@ import {
   Scene,
   SceneLoader,
   Vector3,
-  Animation
+  Animation,
+  PBRMetallicRoughnessMaterial
 } from "@babylonjs/core";
 import createEngine from "./createEngine";
 import createScene from "./createScene";
 import '@babylonjs/loaders/glTF';
 
 import './config'
+import { rgb } from "../utils";
+
+type ModelAnimation = { position: number[], target: number[] }
 
 class LibraryScene {
   private _scene!: Scene;
   private _camera!: ArcRotateCamera;
+  private _cacheMesheNames: string[] = []
 
   constructor(canvas: HTMLCanvasElement) {
     this.init(canvas)
@@ -66,6 +71,28 @@ class LibraryScene {
 
   loadModel(callback?: (event: ISceneLoaderProgressEvent) => void) {
     SceneLoader.AppendAsync('/model/', 'library.glb', this._scene, callback)
+  }
+
+  selectModel(names: string[], animation: ModelAnimation) {
+    const pbr = new PBRMetallicRoughnessMaterial("prb", this._scene);
+    pbr.baseColor = rgb(0, 210, 255)
+    pbr.metallic = 0.5;
+    pbr.roughness = 0.7;
+    this._scene.meshes.forEach(mesh => {
+      if (this._cacheMesheNames.includes(mesh.name)) {
+        mesh.material = pbr;
+      }
+      if (names.includes(mesh.name)) {
+        this._cacheMesheNames.push(...names);
+        mesh.material = pbr
+        this.showSelectModel(animation);
+      }
+    });
+  }
+
+  showSelectModel(animation: ModelAnimation) {
+    this.animateCamera('position', new Vector3(...animation.position));
+    this.animateCamera('target', new Vector3(...animation.target));
   }
   
 }
