@@ -7,7 +7,11 @@ import {
   SceneLoader,
   Vector3,
   Animation,
-  PBRMetallicRoughnessMaterial
+  ActionManager,
+  ExecuteCodeAction,
+  ActionEvent,
+  Color3,
+  PBRMaterial
 } from "@babylonjs/core";
 import createEngine from "./createEngine";
 import createScene from "./createScene";
@@ -22,7 +26,7 @@ type LoadModeCallback = (event: ISceneLoaderProgressEvent) => void
 class LibraryScene {
   private _scene!: Scene;
   private _camera!: ArcRotateCamera;
-  private _cacheMesheNames: string[] = []
+  private _cacheMesheNames: {name: string, color: Color3}[] = []
 
   constructor(canvas: HTMLCanvasElement, callback?: LoadModeCallback) {
     this.init(canvas, callback)
@@ -32,7 +36,7 @@ class LibraryScene {
     const engine = await createEngine(canvas)
     this._scene = createScene(engine)
     this.createCamera()
-    this.loadModel()
+    this.loadModel(callback)
   }
   
   createCamera() {
@@ -62,7 +66,7 @@ class LibraryScene {
       "animation",
       this._camera,
       type,
-      45,
+      60,
       200,
       this._camera[type],
       position,
@@ -71,30 +75,39 @@ class LibraryScene {
     );
   }
 
-  loadModel(callback?: LoadModeCallback) {
-    SceneLoader.AppendAsync('/model/', 'library.glb', this._scene, callback)
+  async loadModel(callback?: LoadModeCallback) {
+    await SceneLoader.AppendAsync('/model/', 'library.glb', this._scene, callback)
   }
 
   selectModel(names: string[], animation: ModelAnimation) {
-    const pbr = new PBRMetallicRoughnessMaterial("prb", this._scene);
-    pbr.baseColor = rgb(0, 210, 255)
-    pbr.metallic = 0.5;
-    pbr.roughness = 0.7;
-    this._scene.meshes.forEach(mesh => {
-      if (this._cacheMesheNames.includes(mesh.name)) {
-        mesh.material = pbr;
+    this._scene.meshes.map(mesh => {
+      const _material = mesh.material as PBRMaterial
+      const _cacheMeshIndex = this._cacheMesheNames?.map(item => item.name).flat().indexOf(mesh.name)
+      if ( _cacheMeshIndex !== -1) {
+        _material.albedoColor = this._cacheMesheNames[_cacheMeshIndex].color
       }
       if (names.includes(mesh.name)) {
-        this._cacheMesheNames.push(...names);
-        mesh.material = pbr
-        this.showSelectModel(animation);
+        _cacheMeshIndex === -1
+          && this._cacheMesheNames.push({name: mesh.name, color: _material.albedoColor})
+        _material.albedoColor = rgb(0, 200, 255)
+        this.showSelectModel(animation)
       }
-    });
+    })
   }
 
   showSelectModel(animation: ModelAnimation) {
     this.animateCamera('position', new Vector3(...animation.position));
     this.animateCamera('target', new Vector3(...animation.target));
+  }
+
+  registerAction(names: string[], callback: (evt: ActionEvent) => void) {
+    this._scene.meshes.forEach(mesh => {
+      if (names.includes(mesh.name)) {
+        mesh.actionManager = new ActionManager(this._scene)
+        mesh.actionManager.registerAction(
+          new ExecuteCodeAction(ActionManager.OnPickUpTrigger, callback))
+      }
+    })
   }
   
 }
